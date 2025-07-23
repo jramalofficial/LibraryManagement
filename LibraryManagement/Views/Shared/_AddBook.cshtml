@@ -4,48 +4,56 @@
 <div class="modal fade" id="addBookModal" tabindex="-1" aria-labelledby="addBookModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-         
+
             <div class="modal-header">
-                <h5 class="modal-title" id="addBookModalLabel">Add Book</h5>
+                <h5 class="modal-title" id="bookModalLabel">Add Book</h5>
+
+
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <form id="addBookForm" asp-action="Add" method="post">
-                <div class="modal-body">        
+            <form id="addBookForm" asp-controller="Book" asp-action="Add" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="book-id" name="Id" />
+
                     <div class="mb-3">
                         <label asp-for="Title" class="form-label"></label>
-                        <input asp-for="Title" class="form-control" />
+                        <input asp-for="Title" class="form-control" id="Title" />
                         <span asp-validation-for="Title" class="text-danger"></span>
                     </div>
 
                     <div class="mb-3">
                         <label asp-for="Author" class="form-label"></label>
-                        <input asp-for="Author" class="form-control" />
+                        <input asp-for="Author" class="form-control" id="Author" />
                         <span asp-validation-for="Author" class="text-danger"></span>
                     </div>
 
                     <div class="mb-3">
                         <label asp-for="Description" class="form-label"></label>
-                        <textarea asp-for="Description" class="form-control"></textarea>
+                        <textarea asp-for="Description" class="form-control" id="Description"></textarea>
                         <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label asp-for="AvailableCopies" class="form-label"></label>
-                    <input asp-for="AvailableCopies" class="form-control" />
+                    <input asp-for="AvailableCopies" class="form-control" id="AvailableCopies" />
                     <span asp-validation-for="AvailableCopies" class="text-danger"></span>
                 </div>
 
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Book</button>
+                    <button type="submit" id="bookFormSubmit" class="btn btn-primary">Add Book</button>
+
+
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+
 
 
 

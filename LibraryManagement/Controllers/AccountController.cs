@@ -1,4 +1,5 @@
 ﻿using LibraryManagement.Models.ViewModels;
+using LibraryManagement.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -8,32 +9,25 @@ namespace LibraryManagement.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly UserManager<IdentityUser> _userManager;
-        private readonly SignInManager<IdentityUser> _signInManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IAccountService _accountService;
 
-
-        public AccountController(UserManager<IdentityUser> userManager,
-                                 SignInManager<IdentityUser> signInManager,
-                                 RoleManager<IdentityRole> rolemanager)
+        public AccountController(IAccountService accountService)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _roleManager = rolemanager;
+            _accountService = accountService;
         }
 
-       
         [HttpGet]
-        public IActionResult Register()
+        public async Task<IActionResult> Register()
         {
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Index", "Book"); 
+            }
             var model = new RegisterViewModel
             {
-                Roles = _roleManager.Roles.Select(r => new SelectListItem
-                {
-                    Text = r.Name,
-                    Value = r.Name
-                }).ToList()
+                Roles = await _accountService.GetRolesAsync()
             };
+            
             return View(model);
         }
 
@@ -43,43 +37,21 @@ namespace LibraryManagement.Controllers
         {
             if (!ModelState.IsValid)
             {
-                model.Roles = _roleManager.Roles.Select(r => new SelectListItem
-                {
-                    Text = r.Name,
-                    Value = r.Name
-                }).ToList();
-
+                model.Roles = await _accountService.GetRolesAsync();
                 return View(model);
             }
-            model.Roles = _roleManager.Roles.Select(r => new SelectListItem
-            {
-                Text = r.Name,
-                Value = r.Name
-            }).ToList();
 
-            var user = new IdentityUser
-            {
-                UserName = model.Username,
-                Email = model.Email
-            };
-
-            var result = await _userManager.CreateAsync(user, model.Password);
+            var result = await _accountService.RegisterAsync(model);
 
             if (result.Succeeded)
-            {
-                await _userManager.AddToRoleAsync(user, model.Role);
-                await _signInManager.SignInAsync(user, isPersistent: false);
                 return RedirectToAction("Index", "Book");
-            }
 
             foreach (var error in result.Errors)
-            {
                 ModelState.AddModelError("", error.Description);
-            }
-            return View(model);
 
+            model.Roles = await _accountService.GetRolesAsync();
+            return View(model);
         }
-        
 
         [HttpGet]
         public IActionResult Login()
@@ -95,21 +67,19 @@ namespace LibraryManagement.Controllers
                 return View(model);
             }
 
-            var result = await _signInManager.PasswordSignInAsync(
-                model.Username, model.Password, false, false);
+            var result = await _accountService.LoginAsync(model);
 
             if (result.Succeeded)
             {
                 return RedirectToAction("Index", "Book");
             }
-
             ModelState.AddModelError("", "Invalid login attempt");
             return View(model);
         }
 
         public async Task<IActionResult> Logout()
         {
-            await _signInManager.SignOutAsync();
+            await _accountService.LogoutAsync();
             return RedirectToAction("Login");
         }
     }

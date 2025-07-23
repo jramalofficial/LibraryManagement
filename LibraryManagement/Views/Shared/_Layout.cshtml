@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/LibraryManagement.styles.css" asp-append-version="true" />
- 
+
 </head>
 <body>
     <header>
@@ -20,14 +20,14 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                       
+
                         @if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
                         {
                             @if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
                             {
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBookModal">
-                                Add Book
-                            </button>
+                                <button type="button" class="btn btn-primary" id="addBookButton">
+                                    Add Book
+                                </button>
                             }
                         }
                     </ul>
@@ -43,7 +43,7 @@
     </header>
     <div class="container">
         <main role="main" class="pb-3">
-            @RenderBody()          
+            @RenderBody()
         </main>
     </div>
 
@@ -58,9 +58,34 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
-    
 
-    @await Html.PartialAsync("_AddBook", new LibraryManagement.Models.ViewModels.AddViewModel())  
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const $form = $('#addBookForm');
+            const $modal = $('#addBookModal');
+
+            // 🔄 Reset validation and fields when modal is closed
+            $modal.on('hidden.bs.modal', function () {
+                $form[0].reset(); // Clear input values
+                $form.find('.text-danger').text(''); // Clear validation messages
+                $form.find('.form-control').removeClass('is-invalid is-valid'); // Remove visual styles
+            });
+
+            // 🆕 Open modal on Add Book button click
+            $('#addBookButton').on('click', function () {
+                $('#bookModalLabel').text('Add Book');
+                $('#bookFormSubmit').text('Add Book');
+                $form.attr('action', '/Book/Add');
+                $modal.modal('show');
+            });
+        });
     
+    </script>
+    @await Html.PartialAsync("_AddBook", new LibraryManagement.Models.ViewModels.AddViewModel())
+    @RenderSection("Scripts", required: false)
+
+
 </body>
 </html>
+
+

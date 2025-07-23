@@ -3,7 +3,9 @@ using LibraryManagement.Models.Entities;
 using LibraryManagement.Models.ViewModels;
 using LibraryManagement.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace LibraryManagement.Services
 {
@@ -56,45 +58,91 @@ namespace LibraryManagement.Services
 
         public async Task<bool> BorrowBookAsync(Guid bookId, string userId)
         {
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            using var connection = _context.Database.GetDbConnection();
+            await connection.OpenAsync();
 
-            try
+            using var command = connection.CreateCommand();
+            command.CommandText = "dbo.BorrowBook";
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add(new SqlParameter("@BookId", bookId));
+            command.Parameters.Add(new SqlParameter("@UserId", userId));
+            command.Parameters.Add(new SqlParameter("@BorrowDate", DateTime.UtcNow));
+
+            var returnParam = new SqlParameter
             {
-               
-                var book = await _context.Books
-                    .FromSqlRaw("SELECT * FROM Books WITH (UPDLOCK) WHERE Id = {0}", bookId)
-                    .FirstOrDefaultAsync();
+                Direction = ParameterDirection.ReturnValue,
+                SqlDbType = SqlDbType.Int
+            };
+            command.Parameters.Add(returnParam);
+          
 
-                if (book == null || book.AvailableCopies <= 0)
-                {
-                    return false;
-                }
+            await command.ExecuteNonQueryAsync();
 
-               
-                book.AvailableCopies--;
+            int result = (int)returnParam.Value;
 
-                
-                var borrowRecord = new BorrowRecord
-                {
-                    BookId = bookId,
-                    UserId = userId,
-                    BorrowDate = DateTime.Now
-                };
+            if (result == -1)
+                _logger.LogWarning("Book is unavailable.");
+            else if (result == -99)
+                _logger.LogError("Stored procedure failed due to an unknown error.");
 
-                _context.BorrowRecords.Add(borrowRecord);
-
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error borrowing book.");
-                await transaction.RollbackAsync();
-                return false;
-            }
+            return result == 1;
         }
+        public async Task<Book> GetByIdAsync(Guid id)
+        {
+            return await _context.Books.FirstOrDefaultAsync(b => b.Id == id);
+        }
+
+        public async Task<bool> EditAsync(Book updatedBook)
+        {
+            var book = await _context.Books.FindAsync(updatedBook.Id);
+            if (book == null) return false;
+
+            book.Title = updatedBook.Title;
+            book.Author = updatedBook.Author;
+            book.Description = updatedBook.Description;
+            book.AvailableCopies = updatedBook.AvailableCopies;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        //public async Task<Book?> GetBookByIdAsync(Guid id)
+        //{
+        //    return await _context.Books.FindAsync(id);
+        //}
+
+        //public async Task<bool> UpdateBookAsync(Book updatedBook)
+        //{
+        //    var book = await _context.Books.FindAsync(updatedBook.Id);
+        //    if (book == null) return false;
+
+        //    book.Title = updatedBook.Title;
+        //    book.Author = updatedBook.Author;
+        //    book.Description = updatedBook.Description;
+        //    book.AvailableCopies = updatedBook.AvailableCopies;
+
+        //    await _context.SaveChangesAsync();
+        //    return true;
+        //}
+
+        //public async Task<bool> EditBookAsync(Guid id, AddViewModel model)
+        //{
+        //    var book = await _context.Books.FindAsync(id);
+        //    if (book == null)
+        //    {
+        //        return false;
+        //    }
+
+        //    book.Title = model.Title;
+        //    book.Author = model.Author;
+        //    book.Description = model.Description;
+        //    book.AvailableCopies = model.AvailableCopies;
+
+        //    await _context.SaveChangesAsync();
+        //    return true;
+        //}
+
 
 
     }

@@ -1,22 +1,21 @@
 ﻿@model LibraryManagement.Models.ViewModels.BookListViewModel;
 
 <div class="container mt-4">
-    <h1>Available Books</h1>
+        <h1>Available Books</h1>
     @if (TempData["Success"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        @TempData["Success"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        @TempData["Error"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
-
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
     @if (!Model.Books.Any())
     {
         <p>No books found.</p>
@@ -24,39 +23,56 @@
     else
     {
         <table class="table table-bordered table-striped">
-    <thead>
-        <tr>
-            <th>Title</th>
-            <th>Author</th>
-            <th>Description</th>
-            <th>Available Copies</th> <!-- ✅ Show availability -->
-            <th>Action</th> <!-- ✅ New column -->
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var book in Model.Books)
-        {
-            <tr>
-                <td>@book.Title</td>
-                <td>@book.Author</td>
-                <td>@book.Description</td>
-                <td>@book.AvailableCopies</td> <!-- Display available count -->
-                <td>
-                    @if (book.AvailableCopies > 0)
-                    {
-                        <form asp-action="Borrow" method="post" asp-route-bookId="@book.Id">
-                            <button type="submit" class="btn btn-sm btn-success">Borrow</button>
-                        </form>
-                    }
-                    else
-                    {
-                        <span class="text-danger">Unavailable</span>
-                    }
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Description</th>
+                    <th>Available Copies</th> 
+                    <th>Action</th> 
+                  
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var book in Model.Books)
+                {
+                    <tr>
+                        <td>@book.Title</td>
+                        <td>@book.Author</td>
+                        <td>@book.Description</td>
+                        <td>@book.AvailableCopies</td> 
+                        <td>
+                            @if (book.AvailableCopies > 0)
+                            {
+                                <form asp-action="Borrow" method="post" asp-route-bookId="@book.Id">
+                                    <button type="submit" class="btn btn-sm btn-success">Borrow</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="text-danger">Unavailable</span>
+                            }
+                        </td>
+                        @if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
+                        {
+                           <td>
+                               <button class="btn btn-sm btn-primary edit-book-btn"
+                                    data-id="@book.Id"
+                                    data-title="@book.Title"
+                                    data-author="@book.Author"
+                                    data-description="@book.Description"
+                                    data-copies="@book.AvailableCopies"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#addBookModal">
+                                Edit
+                            </button>
+                            </td>
+
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
 
 
         <nav>
@@ -71,3 +87,31 @@
         </nav>
     }
 </div>
+@section Scripts{
+ <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const $form = $('#addBookForm');
+        const $modal = $('#addBookModal');
+
+        // 📝 Handler for edit button click
+        $('.edit-book-btn').on('click', function () {
+            const btn = this; // refers to the clicked button
+
+            // 🧠 Populate form fields from data attributes
+            document.getElementById('book-id').value = btn.dataset.id || '';
+            document.getElementById('Title').value = btn.dataset.title || '';
+            document.getElementById('Author').value = btn.dataset.author || '';
+            document.getElementById('Description').value = btn.dataset.description || '';
+            document.getElementById('AvailableCopies').value = btn.dataset.copies || '';
+
+            // 🏷️ Update modal UI
+            $('#bookModalLabel').text('Edit Book');
+            $('#bookFormSubmit').text('Edit Book');
+            $form.attr('action', '/Book/Edit');
+
+            // 🎬 Show modal
+            $modal.modal('show');
+        });
+    });
+</script>
+}

@@ -1,6 +1,8 @@
-﻿using LibraryManagement.Models.ViewModels;
+﻿using LibraryManagement.Models.Entities;
+using LibraryManagement.Models.ViewModels;
 using LibraryManagement.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace LibraryManagement.Controllers
@@ -15,6 +17,7 @@ namespace LibraryManagement.Controllers
         {
             _bookService = bookService;
             _logger = logger;
+         
         }
 
         [HttpGet]
@@ -71,6 +74,28 @@ namespace LibraryManagement.Controllers
                 TempData["Error"] = "Book is not available.";
             }
 
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Edit(Book model)
+        {
+            if (!ModelState.IsValid)
+            {
+                TempData["Error"] = "Validation failed.";
+                return RedirectToAction("Index"); // Or handle gracefully
+            }
+
+            var book = await _bookService.GetByIdAsync(model.Id);
+            if (book == null)
+                return NotFound();
+
+            book.Title = model.Title;
+            book.Author = model.Author;
+            book.Description = model.Description;
+            book.AvailableCopies = model.AvailableCopies;
+
+            await _bookService.EditAsync(book);
             return RedirectToAction("Index");
         }
 

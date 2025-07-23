@@ -9,7 +9,7 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+
 builder.Services.AddControllersWithViews();
 
 
@@ -19,14 +19,19 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
+
+
+builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IBookService, BookService>();
 
-// 3️⃣ Configure Identity Cookie options
+
+
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
     options.AccessDeniedPath = "/Account/AccessDenied";
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+    options.ExpireTimeSpan = TimeSpan.FromDays(7);
     options.SlidingExpiration = true;
 });
 
@@ -43,14 +48,13 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    await IdentitySeeder.SeedRoles(services); // 👈 Call your method here
+    await IdentitySeeder.SeedRoles(services);
 }
 
-// ------------------------------------------Configure the HTTP request pipeline-----------------------------------------
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 app.UseHttpsRedirection();
@@ -73,5 +77,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Account}/{action=Login}/{id?}");
+    pattern: "{controller=Account}/{action=Register}/{id?}");
 app.Run();

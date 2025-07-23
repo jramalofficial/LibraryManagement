@@ -4,6 +4,7 @@ namespace LibraryManagement.Models.ViewModels
 {
     public class AddViewModel
     {
+        public Guid? Id { get; set; }
         [Required(ErrorMessage= "Title is Required")]
         public string Title { get; set; }
         [Required(ErrorMessage ="Author is Required")]
