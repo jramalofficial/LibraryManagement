@@ -10,5 +10,9 @@ namespace LibraryManagement.Models.ViewModels
         public string Author { get; set; }
         [Required(ErrorMessage ="Description is Required")]
         public string Description { get; set; }
+
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Available copies must be at least 1.")]
+        public int AvailableCopies { get; set; }
     }
 }
