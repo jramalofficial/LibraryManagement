@@ -18,19 +18,6 @@
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-
-                        @if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
-                        {
-                            @if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
-                            {
-                                <button type="button" class="btn btn-primary" id="addBookButton">
-                                    Add Book
-                                </button>
-                            }
-                        }
-                    </ul>
                     @if (User.Identity.IsAuthenticated)
                     {
                         <form asp-controller="Account" asp-action="Logout" method="post" class="d-flex">
@@ -40,6 +27,7 @@
                 </div>
             </div>
         </nav>
+        
     </header>
     <div class="container">
         <main role="main" class="pb-3">
@@ -59,28 +47,6 @@
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const $form = $('#addBookForm');
-            const $modal = $('#addBookModal');
-
-            // 🔄 Reset validation and fields when modal is closed
-            $modal.on('hidden.bs.modal', function () {
-                $form[0].reset(); // Clear input values
-                $form.find('.text-danger').text(''); // Clear validation messages
-                $form.find('.form-control').removeClass('is-invalid is-valid'); // Remove visual styles
-            });
-
-            // 🆕 Open modal on Add Book button click
-            $('#addBookButton').on('click', function () {
-                $('#bookModalLabel').text('Add Book');
-                $('#bookFormSubmit').text('Add Book');
-                $form.attr('action', '/Book/Add');
-                $modal.modal('show');
-            });
-        });
-    
-    </script>
     @await Html.PartialAsync("_AddBook", new LibraryManagement.Models.ViewModels.AddViewModel())
     @RenderSection("Scripts", required: false)
 

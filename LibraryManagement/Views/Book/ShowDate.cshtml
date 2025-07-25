@@ -1,0 +1,17 @@
+﻿@model LibraryManagement.Models.ViewModels.ReturnPolicyViewModal
+
+<h2>Edit Return Policy</h2>
+
+<form asp-action="EditDate" asp-controller="Book" method="post">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label asp-for="ReturnDurationDays" class="form-label"></label>
+        <input asp-for="ReturnDurationDays" class="form-control" />
+        <span asp-validation-for="ReturnDurationDays" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-success">Save Changes</button>
+</form>
+
+

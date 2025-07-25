@@ -9,5 +9,7 @@
 
         public bool IsAvailable { get; set; }
         public int AvailableCopies { get; set; }
+
+        public string CoverImageUrl { get; set; }
     }
 }

@@ -1,0 +1,38 @@
+﻿@model List<LibraryManagement.Models.Entities.BorrowRecord>
+
+<h2 class="mb-4">My Borrowed Books</h2>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-hover shadow-sm">
+        <thead class="table-light">
+            <tr>
+                <th scope="col">Title</th>
+                <th scope="col">Borrow Date</th>
+                <th scope="col">Return Date</th>
+                <th scope="col">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var record in Model)
+            {
+                <tr>
+                    <td>@record.Book.Title</td>
+                    <td>@record.BorrowDate.ToString("dd MMM yyyy")</td>
+                    <td>@record.ReturnDate.ToString("dd MMM yyyy")</td>
+                    <td>
+                        @if (record.IsReturned)
+                        {
+                            <span class="badge bg-success">Returned</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Borrowed</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+

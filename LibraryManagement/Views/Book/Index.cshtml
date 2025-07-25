@@ -1,81 +1,118 @@
-﻿@model LibraryManagement.Models.ViewModels.BookListViewModel;
+﻿@model LibraryManagement.Models.ViewModels.BookListViewModel
 
-<div class="container mt-4">
-        <h1>Available Books</h1>
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h2 class="mb-3 mb-md-0">📚 Available Books</h2>
+
+        <div class="d-flex flex-wrap gap-2">
+            @if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
+            {
+                <button class="btn btn-success" id="addBookButton" data-bs-toggle="modal" data-bs-target="#addBookModal">➕ Add Book</button>
+                <a asp-action="BorrowedBooks" asp-controller="Book" class="btn btn-outline-primary">📘 Borrowed Books</a>
+                <a asp-action="ShowDate" asp-controller="Book" class="btn btn-outline-warning">⏰ Edit Return Date</a>
+            }
+            else if (User.Identity.IsAuthenticated)
+            {
+                <a asp-action="UserBookList" asp-controller="Book" class="btn btn-outline-info">📋 Borrowing Status</a>
+            }
+        </div>
+    </div>
+
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["Success"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <strong>✔️ Success:</strong> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
     @if (TempData["Error"] != null)
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <strong>❌ Error:</strong> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
+
     @if (!Model.Books.Any())
     {
-        <p>No books found.</p>
+        <div class="alert alert-warning text-center">No books found in the library.</div>
     }
     else
     {
-        <table class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Author</th>
-                    <th>Description</th>
-                    <th>Available Copies</th> 
-                    <th>Action</th> 
-                  
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var book in Model.Books)
-                {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle table-bordered">
+                <thead class="table-dark text-center">
                     <tr>
-                        <td>@book.Title</td>
-                        <td>@book.Author</td>
-                        <td>@book.Description</td>
-                        <td>@book.AvailableCopies</td> 
-                        <td>
-                            @if (book.AvailableCopies > 0)
-                            {
-                                <form asp-action="Borrow" method="post" asp-route-bookId="@book.Id">
-                                    <button type="submit" class="btn btn-sm btn-success">Borrow</button>
-                                </form>
-                            }
-                            else
-                            {
-                                <span class="text-danger">Unavailable</span>
-                            }
-                        </td>
-                        @if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
+                        
+                        <th>📖 Title</th>
+                        <th>✍️ Author</th>
+                        <th>📝 Description</th>
+                        <th>📦 Copies</th>
+                        @if (User.IsInRole("User"))
                         {
-                           <td>
-                               <button class="btn btn-sm btn-primary edit-book-btn"
-                                    data-id="@book.Id"
-                                    data-title="@book.Title"
-                                    data-author="@book.Author"
-                                    data-description="@book.Description"
-                                    data-copies="@book.AvailableCopies"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#addBookModal">
-                                Edit
-                            </button>
-                            </td>
-
+                            <th>Action</th>
                         }
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <th>Edit</th>
+                            <th>Delete</th>
+                        }                    
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var book in Model.Books)
+                    {
+                        <tr>
+                           
+                            <td>@book.Title</td>
+                            <td>@book.Author</td>
+                            <td class="text-truncate" style="max-width: 250px;">@book.Description</td>
+                            <td class="text-center">@book.AvailableCopies</td>
 
+                            @if (User.IsInRole("User"))
+                            {
+                                <td class="text-center">
+                                    @if (book.AvailableCopies > 0)
+                                    {
+                                        <form asp-action="Borrow" method="post" asp-route-bookId="@book.Id" asp-route-page="@Model.CurrentPage">
+                                            <button type="submit" class="btn btn-sm btn-success">Borrow</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Unavailable</span>
+                                    }
+                                </td>
+                            }
 
-        <nav>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-primary edit-book-btn"
+                                            data-id="@book.Id"
+                                            data-title="@book.Title"
+                                            data-author="@book.Author"
+                                            data-description="@book.Description"
+                                            data-copies="@book.AvailableCopies"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#addBookModal">
+                                        Edit
+                                    </button>
+                                </td>
+                                <td class="text-center">
+                                    <form asp-action="Delete" method="post" asp-route-id="@book.Id" onsubmit="return confirm('Are you sure?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <nav class="d-flex justify-content-center mt-4">
             <ul class="pagination">
                 @for (int i = 1; i <= Model.TotalPages; i++)
                 {
@@ -87,31 +124,54 @@
         </nav>
     }
 </div>
-@section Scripts{
- <script>
+
+
+<!-- Modal Script -->
+@section Scripts {
+<script>
     document.addEventListener('DOMContentLoaded', function () {
         const $form = $('#addBookForm');
         const $modal = $('#addBookModal');
 
-        // 📝 Handler for edit button click
         $('.edit-book-btn').on('click', function () {
-            const btn = this; // refers to the clicked button
-
-            // 🧠 Populate form fields from data attributes
+            const btn = this;
             document.getElementById('book-id').value = btn.dataset.id || '';
             document.getElementById('Title').value = btn.dataset.title || '';
             document.getElementById('Author').value = btn.dataset.author || '';
             document.getElementById('Description').value = btn.dataset.description || '';
             document.getElementById('AvailableCopies').value = btn.dataset.copies || '';
 
-            // 🏷️ Update modal UI
             $('#bookModalLabel').text('Edit Book');
-            $('#bookFormSubmit').text('Edit Book');
+            $('#bookFormSubmit').text('Update Book');
             $form.attr('action', '/Book/Edit');
-
-            // 🎬 Show modal
-            $modal.modal('show');
         });
     });
+
+    document.addEventListener('DOMContentLoaded', function () {
+            const $form = $('#addBookForm');
+            const $modal = $('#addBookModal');
+
+            // 🔄 Reset validation and fields when modal is closed
+            $modal.on('hidden.bs.modal', function () {
+                $form[0].reset(); // Clear input values
+                $form.find('.text-danger').text(''); // Clear validation messages
+                $form.find('.form-control').removeClass('is-invalid is-valid'); // Remove visual styles
+            });
+
+            // 🆕 Open modal on Add Book button click
+            $('#addBookButton').on('click', function () {
+                $('#bookModalLabel').text('Add Book');
+                $('#bookFormSubmit').text('Add Book');
+                $form.attr('action', '/Book/Add');
+                $modal.modal('show');
+            });
+        });
+ 
+ 
+
+
 </script>
 }
+
+
+

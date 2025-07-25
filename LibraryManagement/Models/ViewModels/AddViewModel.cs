@@ -15,5 +15,9 @@ namespace LibraryManagement.Models.ViewModels
         [Required]
         [Range(1, int.MaxValue, ErrorMessage = "Available copies must be at least 1.")]
         public int AvailableCopies { get; set; }
+
+        [Required(ErrorMessage = "Cover image URL is required.")]
+ 
+        public IFormFile CoverImageUrl { get; set; }
     }
 }

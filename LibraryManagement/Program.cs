@@ -43,6 +43,7 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -77,5 +78,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Account}/{action=Register}/{id?}");
+    pattern: "{controller=Account}/{action=Login}/{id?}");
 app.Run();

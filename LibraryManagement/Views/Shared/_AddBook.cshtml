@@ -33,14 +33,21 @@
                         <textarea asp-for="Description" class="form-control" id="Description"></textarea>
                         <span asp-validation-for="Description" class="text-danger"></span>
                     </div>
-                </div>
 
-                <div class="mb-3">
-                    <label asp-for="AvailableCopies" class="form-label"></label>
-                    <input asp-for="AvailableCopies" class="form-control" id="AvailableCopies" />
-                    <span asp-validation-for="AvailableCopies" class="text-danger"></span>
-                </div>
 
+                    <div class="mb-3">
+                        <label asp-for="AvailableCopies" class="form-label"></label>
+                        <input asp-for="AvailableCopies" class="form-control" id="AvailableCopies" />
+                        <span asp-validation-for="AvailableCopies" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="CoverImageUrl" class="form-label">Book Cover Image</label>
+                        <input asp-for="CoverImageUrl" type="file" class="form-control"></input>
+                        <span asp-validation-for="CoverImageUrl" class="text-danger"></span>
+                    </div>
+
+                </div>
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

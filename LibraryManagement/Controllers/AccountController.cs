@@ -19,10 +19,7 @@ namespace LibraryManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> Register()
         {
-            if (User.Identity != null && User.Identity.IsAuthenticated)
-            {
-                return RedirectToAction("Index", "Book"); 
-            }
+           
             var model = new RegisterViewModel
             {
                 Roles = await _accountService.GetRolesAsync()
@@ -56,6 +53,10 @@ namespace LibraryManagement.Controllers
         [HttpGet]
         public IActionResult Login()
         {
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Index", "Book");
+            }
             return View();
         }
 

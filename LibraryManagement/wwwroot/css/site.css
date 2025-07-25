@@ -20,3 +20,13 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+td, th {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
