@@ -1,5 +1,7 @@
-﻿using LibraryManagement.Data;
+﻿using FluentValidation.AspNetCore;
+using LibraryManagement.Data;
 using LibraryManagement.Helpers;
+using LibraryManagement.Models.Validations;
 using LibraryManagement.Services;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
@@ -10,7 +12,11 @@ using Serilog;
 var builder = WebApplication.CreateBuilder(args);
 
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddFluentValidation(fv => {
+        fv.RegisterValidatorsFromAssemblyContaining<AddViewModelValidator>();
+    });
+
 
 
 builder.Services.AddDbContext<AppDbContext>(options =>

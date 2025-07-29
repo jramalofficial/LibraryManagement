@@ -12,7 +12,8 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <form id="addBookForm" asp-controller="Book" asp-action="Add" method="post">
+            <form id="addBookForm" asp-controller="Book" asp-action="Add" method="post" enctype="multipart/form-data">
+
                 <div class="modal-body">
                     <input type="hidden" id="book-id" name="Id" />
 
@@ -41,10 +42,10 @@
                         <span asp-validation-for="AvailableCopies" class="text-danger"></span>
                     </div>
 
-                    <div class="mb-3">
-                        <label asp-for="CoverImageUrl" class="form-label">Book Cover Image</label>
-                        <input asp-for="CoverImageUrl" type="file" class="form-control"></input>
-                        <span asp-validation-for="CoverImageUrl" class="text-danger"></span>
+                    <div class="col-md-6">
+                        <label asp-for="CoverImageUrl" class="form-label"></label>
+                        <input asp-for="CoverImageUrl" class="form-control" id="CoverImageUrl" />
+                        <span asp-validation-for="CoverImageUrl" class="text-danger" ></span>
                     </div>
 
                 </div>
@@ -60,6 +61,8 @@
     </div>
 </div>
 
+
+<partial name="_ValidationScriptsPartial" />
 
 
 

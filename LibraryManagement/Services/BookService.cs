@@ -33,13 +33,37 @@ namespace LibraryManagement.Services
             {
                 return false;
             }
+            string imagePath = null;
+
+            if (addBook.CoverImageUrl != null && addBook.CoverImageUrl.Length > 0)
+            {
+                
+                string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
+                Directory.CreateDirectory(uploadsFolder);
+
+                
+                string uniqueFileName = Guid.NewGuid().ToString() + "_" + addBook.CoverImageUrl.FileName;
+                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await addBook.CoverImageUrl.CopyToAsync(stream, cancellationToken);
+                }
+
+                // Relative path for saving in DB
+                imagePath = "/uploads/" + uniqueFileName;
+            }
+
+
             var book = new Book
             {
                 Title = addBook.Title,
                 Author = addBook.Author,
                 Description = addBook.Description,
                 AvailableCopies = addBook.AvailableCopies,
-                IsAvailable = true
+                IsAvailable = true,
+                CoverImageUrl = imagePath
             };
 
             await _context.Books.AddAsync(book,cancellationToken);
@@ -48,21 +72,21 @@ namespace LibraryManagement.Services
             return true;
         }
 
-        public async Task<(List<Book> Books, int TotalCount)> ListBooksAsync(int page, int pageSize)
+        public async Task<(List<Book> Books, int TotalCount)> ListBooksAsync(int page, int pageSize,CancellationToken cancellationToken)
         {
-            var total = await _context.Books.CountAsync();
+            var total = await _context.Books.CountAsync(cancellationToken);
             var books = await _context.Books
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             return (books, total);
         }
 
-        public async Task<bool> BorrowBookAsync(Guid bookId, string userId, DateTime returnDate)
+        public async Task<bool> BorrowBookAsync(Guid bookId, string userId, DateTime returnDate,CancellationToken cancellationToken)
         {
             using var connection = _context.Database.GetDbConnection();
-            await connection.OpenAsync();
+            await connection.OpenAsync(cancellationToken);
 
             using var command = connection.CreateCommand();
             command.CommandText = "dbo.BorrowBook";
@@ -81,7 +105,7 @@ namespace LibraryManagement.Services
             command.Parameters.Add(returnParam);
 
 
-            await command.ExecuteNonQueryAsync();
+            await command.ExecuteNonQueryAsync(cancellationToken);
 
             int result = (int)returnParam.Value;
 
@@ -92,14 +116,14 @@ namespace LibraryManagement.Services
 
             return result == 1;
         }
-        public async Task<Book> GetByIdAsync(Guid id)
+        public async Task<Book> GetByIdAsync(Guid? id,CancellationToken cancellationToken)
         {
-            return await _context.Books.FirstOrDefaultAsync(b => b.Id == id);
+            return await _context.Books.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
         }
 
-        public async Task<bool> EditAsync(Book updatedBook)
+        public async Task<bool> EditAsync(Book updatedBook, CancellationToken cancellationToken)
         {
-            var book = await _context.Books.FindAsync(updatedBook.Id);
+            var book = await _context.Books.FindAsync(updatedBook.Id,cancellationToken);
             if (book == null)
             {
                 return false;
@@ -110,61 +134,60 @@ namespace LibraryManagement.Services
             book.Description = updatedBook.Description;
             book.AvailableCopies = updatedBook.AvailableCopies;
 
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
             return true;
         }
 
-        public async Task<bool> DeleteAsync(Guid id)
+        public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken)
         {
-            var book = await _context.Books.FindAsync(id);
+            var book = await _context.Books.FindAsync(id, cancellationToken);
             if (book == null)
             {
                 return false;
             }
             _context.Books.Remove(book);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
             return true;
         }
-        public async Task<List<BorrowRecord>> ListRecord()
+        public async Task<List<BorrowRecord>> ListRecord(CancellationToken cancellationToken)
         {
-            var record = await _context.BorrowRecords.Include(b => b.Book).ToListAsync();
+            var record = await _context.BorrowRecords.Include(b => b.Book).ToListAsync(cancellationToken);
 
             return record;
 
         }
-        public async Task<bool> ReturnBookAsync(Guid id)
+        public async Task<bool> ReturnBookAsync(Guid id,CancellationToken cancellationToken)
         {
-            var record = await _context.BorrowRecords.FindAsync(id);
+            var record = await _context.BorrowRecords.FindAsync(id,cancellationToken);
             if (record == null)
             {
                 return false;
             }
             record.IsReturned = true;
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
             return true;
         }
 
-        public async Task<List<BorrowRecord>> ListUserRecord(string id)
+        public async Task<List<BorrowRecord>> ListUserRecord(string id,CancellationToken cancellationToken)
         {
-            var record = await _context.BorrowRecords.Include(b => b.Book).Where(b => b.UserId == id).ToListAsync();
+            var record = await _context.BorrowRecords.Include(b => b.Book).Where(b => b.UserId == id).ToListAsync(cancellationToken);
             return record;
         }
 
-        public async Task<ReturnPolicy> ShowDateAsync()
+        public async Task<ReturnPolicy> ShowDateAsync(CancellationToken cancellationToken)
         {
-            var existingPolicy = await _context.ReturnPolicies.FirstOrDefaultAsync();
+            var existingPolicy = await _context.ReturnPolicies.FirstOrDefaultAsync(cancellationToken);
             return existingPolicy;
-
         }
-        public async Task<bool> EditDateAsync(ReturnPolicy policy)
+        public async Task<bool> EditDateAsync(ReturnPolicy policy, CancellationToken cancellationToken)
         {
-            var existingPolicy = await _context.ReturnPolicies.FindAsync(policy.Id);
+            var existingPolicy = await _context.ReturnPolicies.FindAsync(policy.Id,cancellationToken);
             if (existingPolicy == null)
             {
                 return false;
             }
             existingPolicy.ReturnDurationDays = policy.ReturnDurationDays;
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
             return true;
         }
 

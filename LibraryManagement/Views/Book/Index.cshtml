@@ -43,7 +43,7 @@
             <table class="table table-hover align-middle table-bordered">
                 <thead class="table-dark text-center">
                     <tr>
-                        
+                        <th>Cover</th>
                         <th>📖 Title</th>
                         <th>✍️ Author</th>
                         <th>📝 Description</th>
@@ -63,7 +63,16 @@
                     @foreach (var book in Model.Books)
                     {
                         <tr>
-                           
+                            <td>
+                            @if (!string.IsNullOrEmpty(book.CoverImageUrl))
+                            {
+                                <img src="@book.CoverImageUrl" alt="Cover Image" style="width: 80px; height: 120px; object-fit: cover;" />
+                            }
+                            else
+                            {
+                                <span class="text-muted">No Image</span>
+                            }
+                            </td>
                             <td>@book.Title</td>
                             <td>@book.Author</td>
                             <td class="text-truncate" style="max-width: 250px;">@book.Description</td>
@@ -111,7 +120,7 @@
             </table>
         </div>
 
-        <!-- Pagination -->
+        
         <nav class="d-flex justify-content-center mt-4">
             <ul class="pagination">
                 @for (int i = 1; i <= Model.TotalPages; i++)
@@ -126,50 +135,62 @@
 </div>
 
 
-<!-- Modal Script -->
+
 @section Scripts {
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const $form = $('#addBookForm');
         const $modal = $('#addBookModal');
+        const $coverImageInput = $('#CoverImageUrl');
 
+        // 🖊️ Handle Edit Book
         $('.edit-book-btn').on('click', function () {
             const btn = this;
-            document.getElementById('book-id').value = btn.dataset.id || '';
-            document.getElementById('Title').value = btn.dataset.title || '';
-            document.getElementById('Author').value = btn.dataset.author || '';
-            document.getElementById('Description').value = btn.dataset.description || '';
-            document.getElementById('AvailableCopies').value = btn.dataset.copies || '';
+            $('#book-id').val(btn.dataset.id || '');
+            $('#Title').val(btn.dataset.title || '');
+            $('#Author').val(btn.dataset.author || '');
+            $('#Description').val(btn.dataset.description || '');
+            $('#AvailableCopies').val(btn.dataset.copies || '');
 
             $('#bookModalLabel').text('Edit Book');
             $('#bookFormSubmit').text('Update Book');
             $form.attr('action', '/Book/Edit');
+
+            // 🟢 Make file upload optional in Edit mode
+            $coverImageInput.removeAttr('data-val-required');
+            $coverImageInput.rules('remove', 'required');
+
+            $modal.modal('show');
+        });
+
+        // ➕ Handle Add Book
+        $('#addBookButton').on('click', function () {
+            $('#bookModalLabel').text('Add Book');
+            $('#bookFormSubmit').text('Add Book');
+            $form.attr('action', '/Book/Add');
+
+            // 🔴 Make file upload required in Add mode
+            $coverImageInput.attr('data-val-required', 'Cover image is required.');
+            $coverImageInput.rules('add', {
+                required: true,
+                messages: {
+                    required: 'Cover image is required.'
+                }
+            });
+
+            $modal.modal('show');
+        });
+
+        // 🧼 Reset the form on modal close
+        $modal.on('hidden.bs.modal', function () {
+            $form[0].reset();
+            $form.find('.text-danger').text('');
+            $form.find('.form-control').removeClass('is-invalid is-valid');
+
+            // Reset validation state
+            $form.validate().resetForm();
         });
     });
-
-    document.addEventListener('DOMContentLoaded', function () {
-            const $form = $('#addBookForm');
-            const $modal = $('#addBookModal');
-
-            // 🔄 Reset validation and fields when modal is closed
-            $modal.on('hidden.bs.modal', function () {
-                $form[0].reset(); // Clear input values
-                $form.find('.text-danger').text(''); // Clear validation messages
-                $form.find('.form-control').removeClass('is-invalid is-valid'); // Remove visual styles
-            });
-
-            // 🆕 Open modal on Add Book button click
-            $('#addBookButton').on('click', function () {
-                $('#bookModalLabel').text('Add Book');
-                $('#bookFormSubmit').text('Add Book');
-                $form.attr('action', '/Book/Add');
-                $modal.modal('show');
-            });
-        });
- 
- 
-
-
 </script>
 }
 

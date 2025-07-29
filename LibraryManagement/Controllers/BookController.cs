@@ -5,9 +5,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ValueGeneration.Internal;
 using System.Runtime.CompilerServices;
 using System.Security.Claims;
-using System.Threading.Tasks;
+
 
 namespace LibraryManagement.Controllers
 {
@@ -28,9 +29,9 @@ namespace LibraryManagement.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1)
+        public async Task<IActionResult> Index(CancellationToken cancellationToken, int page = 1)
         {
-            var (books, totalCount) = await _bookService.ListBooksAsync(page, PageSize);
+            var (books, totalCount) = await _bookService.ListBooksAsync(page, PageSize, cancellationToken);
 
             var viewModel = new BookListViewModel
             {
@@ -44,9 +45,9 @@ namespace LibraryManagement.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> BorrowedBooks()
+        public async Task<IActionResult> BorrowedBooks(CancellationToken cancellationToken)
         {
-            var record = await _bookService.ListRecord();
+            var record = await _bookService.ListRecord(cancellationToken);
 
             if (record == null)
             {
@@ -65,25 +66,27 @@ namespace LibraryManagement.Controllers
             return View(result);
         }
         [HttpGet]
-        public async Task<IActionResult> UserBookList()
+        public async Task<IActionResult> UserBookList(CancellationToken cancellationToken)
         {
             string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null)
             {
                 return Unauthorized();
             }
-            var records = await _bookService.ListUserRecord(userId);
+            var records = await _bookService.ListUserRecord(userId,cancellationToken);
             return View(records);
         }
         [HttpPost]
-        public async Task<IActionResult> Add(AddViewModel addBook)
+        public async Task<IActionResult> Add(AddViewModel addBook, CancellationToken cancellationToken)
         {
-            if (!ModelState.IsValid)
-            {
-                return PartialView("_AddBook", addBook);
-            }
+            //if (!ModelState.IsValid)
+            //{
+            //    return PartialView("_AddBook", addBook);
+            //}
+            var imageFile = addBook.CoverImageUrl;
 
-            bool success = await _bookService.AddBookAsync(addBook);
+            bool success = await _bookService.AddBookAsync(addBook ,cancellationToken);
+          
             if (!success)
             {
                 ModelState.AddModelError("", "A book with the same title and author already exists");
@@ -94,7 +97,7 @@ namespace LibraryManagement.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Borrow(Guid bookId, int page)
+        public async Task<IActionResult> Borrow(Guid bookId, int page, CancellationToken cancellationToken)
         {
             string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -104,10 +107,10 @@ namespace LibraryManagement.Controllers
             }
 
             var borrowDate = DateTime.Now;
-            var Date = await _bookService.ShowDateAsync();
+            var Date = await _bookService.ShowDateAsync(cancellationToken);
             var returnDate = borrowDate.AddDays(Date.ReturnDurationDays);
 
-            bool result = await _bookService.BorrowBookAsync(bookId, userId, returnDate);
+            bool result = await _bookService.BorrowBookAsync(bookId, userId, returnDate,cancellationToken);
 
             if (result)
             {
@@ -122,33 +125,61 @@ namespace LibraryManagement.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Edit(Book model)
+        public async Task<IActionResult> Edit(AddViewModel model, CancellationToken cancellationToken)
         {
-            if (!ModelState.IsValid)
-            {
-                TempData["Error"] = "Validation failed.";
-                return RedirectToAction("Index");
-            }
+            //if (!ModelState.IsValid)
+            //{
+            //    TempData["Error"] = "Validation failed.";
+            //    return RedirectToAction("Index");
+            //}
 
-
-            var book = await _bookService.GetByIdAsync(model.Id);
+            var book = await _bookService.GetByIdAsync(model.Id, cancellationToken);
             if (book == null)
             {
-                return NotFound();
+                TempData["Error"] = "Book not found.";
+                return RedirectToAction("Index");
             }
             book.Title = model.Title;
             book.Author = model.Author;
             book.Description = model.Description;
             book.AvailableCopies = model.AvailableCopies;
 
-            await _bookService.EditAsync(book);
+            if (model.CoverImageUrl != null && model.CoverImageUrl.Length > 0)
+            {
+                
+                if (!string.IsNullOrEmpty(book.CoverImageUrl))
+                {
+                    var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", book.CoverImageUrl.TrimStart('/'));
+                    if (System.IO.File.Exists(oldPath))
+                        System.IO.File.Delete(oldPath);
+                }
+
+                
+                var fileExtension = Path.GetExtension(model.CoverImageUrl.FileName);
+                var fileName = $"{Guid.NewGuid()}{fileExtension}";
+                var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+
+                Directory.CreateDirectory(folderPath); 
+                var filePath = Path.Combine(folderPath, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await model.CoverImageUrl.CopyToAsync(stream, cancellationToken);
+                }
+
+                book.CoverImageUrl = $"/uploads/{fileName}";
+            }
+
+            await _bookService.EditAsync(book, cancellationToken);
             return RedirectToAction("Index");
+
         }
 
+
         [HttpPost]
-        public async Task<IActionResult> Delete(Guid id)
+        public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
         {
-            var result = await _bookService.DeleteAsync(id);
+            var result = await _bookService.DeleteAsync(id, cancellationToken);
             if (!result)
             {
                 TempData["Error"] = "Book Not found";
@@ -158,11 +189,10 @@ namespace LibraryManagement.Controllers
             return RedirectToAction("Index");
         }
 
-
         [HttpPost("Books/Return/{id}")]
-        public async Task<IActionResult> Return(Guid id)
+        public async Task<IActionResult> Return(Guid id, CancellationToken cancellationToken)
         {
-            bool result = await _bookService.ReturnBookAsync(id);
+            bool result = await _bookService.ReturnBookAsync(id, cancellationToken);
             if (result)
             {
                 return Ok(new { message = "Book returned successfully!" });
@@ -175,17 +205,17 @@ namespace LibraryManagement.Controllers
         }
 
         [HttpPost]
-        public async Task<List<BorrowRecord>> ListUserBooks()
+        public async Task<List<BorrowRecord>> ListUserBooks(CancellationToken cancellationToken)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var records = await _bookService.ListUserRecord(userId);
+            var records = await _bookService.ListUserRecord(userId, cancellationToken);
             return (records);
         }
 
         [HttpGet]
-        public async Task<IActionResult> ShowDate()
+        public async Task<IActionResult> ShowDate(CancellationToken cancellationToken)
         {
-            var policy = await _bookService.ShowDateAsync();
+            var policy = await _bookService.ShowDateAsync(cancellationToken);
             if (policy == null)
             {
                 return NotFound("Return policy not found.");
@@ -201,9 +231,9 @@ namespace LibraryManagement.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> EditDate(ReturnPolicy returnDate)
+        public async Task<IActionResult> EditDate(ReturnPolicy returnDate, CancellationToken cancellationToken)
         {
-            var policy = await _bookService.EditDateAsync(returnDate);
+            var policy = await _bookService.EditDateAsync(returnDate,cancellationToken);
             if (policy == null)
             {
                 return NotFound("Return policy not found.");
