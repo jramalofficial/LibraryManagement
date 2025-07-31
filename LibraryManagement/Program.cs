@@ -1,7 +1,11 @@
-﻿using FluentValidation.AspNetCore;
+﻿using FluentValidation;
+using FluentValidation.AspNetCore;
 using LibraryManagement.Data;
 using LibraryManagement.Helpers;
 using LibraryManagement.Models.Validations;
+
+//using LibraryManagement.Models.Validations;
+using LibraryManagement.Models.ViewModels;
 using LibraryManagement.Services;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
@@ -12,26 +16,21 @@ using Serilog;
 var builder = WebApplication.CreateBuilder(args);
 
 
-builder.Services.AddControllersWithViews()
-    .AddFluentValidation(fv => {
-        fv.RegisterValidatorsFromAssemblyContaining<AddViewModelValidator>();
-    });
-
-
+builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), sql => sql.EnableRetryOnFailure()));
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddFluentValidationClientsideAdapters();
+builder.Services.AddScoped<IValidator<AddViewModel>, AddViewModelValidator>();
 
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IBookService, BookService>();
-
-
-
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -48,8 +47,6 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-
-
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -58,12 +55,12 @@ using (var scope = app.Services.CreateScope())
     await IdentitySeeder.SeedRoles(services);
 }
 
-
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.Use(async (context, next) =>
@@ -77,6 +74,7 @@ app.Use(async (context, next) =>
         context.Response.Redirect("/Error/Antiforgery");
     }
 });
+
 app.UseExceptionHandler("/Error/500");
 app.UseStatusCodePagesWithRedirects("/Error/{0}");
 app.UseRouting();

@@ -1,4 +1,5 @@
-﻿@model LibraryManagement.Models.ViewModels.BookListViewModel
+﻿@using LibraryManagement.Models.ViewModels
+@model LibraryManagement.Models.ViewModels.BookListViewModel
 
 <div class="container py-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
@@ -7,9 +8,9 @@
         <div class="d-flex flex-wrap gap-2">
             @if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
             {
-                <button class="btn btn-success" id="addBookButton" data-bs-toggle="modal" data-bs-target="#addBookModal">➕ Add Book</button>
-                <a asp-action="BorrowedBooks" asp-controller="Book" class="btn btn-outline-primary">📘 Borrowed Books</a>
-                <a asp-action="ShowDate" asp-controller="Book" class="btn btn-outline-warning">⏰ Edit Return Date</a>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBookModal">Add Book</button>
+                <a asp-action="BorrowedBooks" asp-controller="Book" class="btn btn-outline-primary">Borrowed Books</a>
+                <a asp-action="ShowDate" asp-controller="Book" class="btn btn-outline-warning">Edit Return Date</a>
             }
             else if (User.Identity.IsAuthenticated)
             {
@@ -28,7 +29,7 @@
     @if (TempData["Error"] != null)
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>❌ Error:</strong> @TempData["Error"]
+            <strong>Error:</strong> @TempData["Error"]
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
@@ -44,10 +45,10 @@
                 <thead class="table-dark text-center">
                     <tr>
                         <th>Cover</th>
-                        <th>📖 Title</th>
-                        <th>✍️ Author</th>
-                        <th>📝 Description</th>
-                        <th>📦 Copies</th>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Description</th>
+                        <th>Copies</th>
                         @if (User.IsInRole("User"))
                         {
                             <th>Action</th>
@@ -97,16 +98,9 @@
                             @if (User.IsInRole("Admin"))
                             {
                                 <td class="text-center">
-                                    <button class="btn btn-sm btn-outline-primary edit-book-btn"
-                                            data-id="@book.Id"
-                                            data-title="@book.Title"
-                                            data-author="@book.Author"
-                                            data-description="@book.Description"
-                                            data-copies="@book.AvailableCopies"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#addBookModal">
-                                        Edit
-                                    </button>
+                                  <button class="btn btn-warning btn-sm" onclick="openEditModal('@book.Id')">Edit</button>
+
+                                
                                 </td>
                                 <td class="text-center">
                                     <form asp-action="Delete" method="post" asp-route-id="@book.Id" onsubmit="return confirm('Are you sure?');">
@@ -119,8 +113,8 @@
                 </tbody>
             </table>
         </div>
-
-        
+       
+        <div id="modalContainer"></div>
         <nav class="d-flex justify-content-center mt-4">
             <ul class="pagination">
                 @for (int i = 1; i <= Model.TotalPages; i++)
@@ -134,65 +128,76 @@
     }
 </div>
 
+@Html.Partial("AddViewModal", new AddViewModel()) 
 
 
-@section Scripts {
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const $form = $('#addBookForm');
-        const $modal = $('#addBookModal');
-        const $coverImageInput = $('#CoverImageUrl');
 
-        // 🖊️ Handle Edit Book
-        $('.edit-book-btn').on('click', function () {
-            const btn = this;
-            $('#book-id').val(btn.dataset.id || '');
-            $('#Title').val(btn.dataset.title || '');
-            $('#Author').val(btn.dataset.author || '');
-            $('#Description').val(btn.dataset.description || '');
-            $('#AvailableCopies').val(btn.dataset.copies || '');
-
-            $('#bookModalLabel').text('Edit Book');
-            $('#bookFormSubmit').text('Update Book');
-            $form.attr('action', '/Book/Edit');
-
-            // 🟢 Make file upload optional in Edit mode
-            $coverImageInput.removeAttr('data-val-required');
-            $coverImageInput.rules('remove', 'required');
-
-            $modal.modal('show');
+@section Scripts{
+     @Html.RenderPartialAsync("_ValidationScriptsPartial");
+    <script>
+         $(document).ready(function() {
+           
+            $('#addBookForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                var form = $(this);
+                var formData = new FormData(this);
+                
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        
+                        if (response.includes('modal-content')) {
+                            $('#addBookModalContent').html($(response).find('#addBookModalContent').html());
+                            
+                            var newForm = $('#addBookForm');
+                            newForm.removeData('validator');
+                            newForm.removeData('unobtrusiveValidation');
+                            $.validator.unobtrusive.parse(newForm);
+                        } else {
+                            
+                            $('#addBookModal').modal('hide');
+                            location.reload();
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred while adding the book.');
+                    }
+                });
+            });
         });
 
-        // ➕ Handle Add Book
-        $('#addBookButton').on('click', function () {
-            $('#bookModalLabel').text('Add Book');
-            $('#bookFormSubmit').text('Add Book');
-            $form.attr('action', '/Book/Add');
-
-            // 🔴 Make file upload required in Add mode
-            $coverImageInput.attr('data-val-required', 'Cover image is required.');
-            $coverImageInput.rules('add', {
-                required: true,
-                messages: {
-                    required: 'Cover image is required.'
+        function openEditModal(bookId) {
+            $.ajax({
+                url: '/Book/Edit/' + bookId,
+                type: 'GET',
+                success: function (partialView) {          
+                     $('#modalContainer').html(partialView);
+                     $('#editBookModal').modal('show');
+                     
+                    
+                     $('#editBookModal').on('shown.bs.modal', function () {
+                         var form = $('#editBookForm');
+                         if (form.length > 0) {
+                             form.removeData('validator');
+                             form.removeData('unobtrusiveValidation');
+                             $.validator.unobtrusive.parse(form);
+                         }
+                     });
+                },
+                error: function (xhr, status, error) {
+                    console.error('AJAX Error:', error); 
+                    alert('Failed to load book details: ' + error);
                 }
             });
-
-            $modal.modal('show');
-        });
-
-        // 🧼 Reset the form on modal close
-        $modal.on('hidden.bs.modal', function () {
-            $form[0].reset();
-            $form.find('.text-danger').text('');
-            $form.find('.form-control').removeClass('is-invalid is-valid');
-
-            // Reset validation state
-            $form.validate().resetForm();
-        });
-    });
-</script>
+        }
+    </script>
 }
 
 
 
+  

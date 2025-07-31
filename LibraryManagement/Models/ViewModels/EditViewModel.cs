@@ -2,8 +2,9 @@
 
 namespace LibraryManagement.Models.ViewModels
 {
-    public class AddViewModel
+    public class EditViewModel
     {
+        public Guid Id { get; set; }
         [Required(ErrorMessage = "Title is Required")]
         public string Title { get; set; }
         [Required(ErrorMessage = "Author is Required")]
@@ -14,13 +15,6 @@ namespace LibraryManagement.Models.ViewModels
         [Required]
         [Range(1, int.MaxValue, ErrorMessage = "Available copies must be at least 1.")]
         public int AvailableCopies { get; set; }
-        [Required(ErrorMessage = "Cover Image is Required")]
-        public IFormFile CoverImageUrl { get; set; }
-        
+        public IFormFile? CoverImageUrl { get; set; }
     }
 }
-
-
-
-
-

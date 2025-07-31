@@ -1,21 +1,11 @@
 ﻿@model LibraryManagement.Models.ViewModels.AddViewModel
 
-
-<div class="modal fade" id="addBookModal" tabindex="-1" aria-labelledby="addBookModalLabel" aria-hidden="true">
+<div class="modal fade" id="addBookModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content">
-
-            <div class="modal-header">
-                <h5 class="modal-title" id="bookModalLabel">Add Book</h5>
-
-
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-
+        <div class="modal-content" id="addBookModalContent">
             <form id="addBookForm" asp-controller="Book" asp-action="Add" method="post" enctype="multipart/form-data">
 
                 <div class="modal-body">
-                    <input type="hidden" id="book-id" name="Id" />
 
                     <div class="mb-3">
                         <label asp-for="Title" class="form-label"></label>
@@ -45,7 +35,7 @@
                     <div class="col-md-6">
                         <label asp-for="CoverImageUrl" class="form-label"></label>
                         <input asp-for="CoverImageUrl" class="form-control" id="CoverImageUrl" />
-                        <span asp-validation-for="CoverImageUrl" class="text-danger" ></span>
+                        <span asp-validation-for="CoverImageUrl" class="text-danger"></span>
                     </div>
 
                 </div>
@@ -60,9 +50,6 @@
         </div>
     </div>
 </div>
-
-
-<partial name="_ValidationScriptsPartial" />
 
 
 

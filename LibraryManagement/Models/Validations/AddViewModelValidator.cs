@@ -8,28 +8,24 @@ namespace LibraryManagement.Models.Validations
         public AddViewModelValidator()
         {
             RuleFor(x => x.Title)
-                .NotEmpty().WithMessage("Title is required.");
+                .NotEmpty().WithMessage("Title is required fluent.");
 
             RuleFor(x => x.Author)
-                .NotEmpty().WithMessage("Author is requiredmmmmmmmmmmmmm.");
+                .NotEmpty().WithMessage("Author is required fluent.");
 
             RuleFor(x => x.Description)
-                .NotEmpty().WithMessage("Description is required.");
+                .NotEmpty().WithMessage("Description is required fluent.");
 
             RuleFor(x => x.AvailableCopies)
-                .GreaterThan(0).WithMessage("Available copies must be at least 1.");
+                .GreaterThan(0).WithMessage("Available copies must be at least 1 fluent.");
 
-            // Edit mode — skip validation entirely
-            // No need to define a rule at all here
-
-            // Add mode — require image upload
-            When(model => model.Id == null, () =>
-            {
-                RuleFor(x => x.CoverImageUrl)
-                    .NotNull().WithMessage("Cover image is required when adding.");
-            });
+            RuleFor(x => x.CoverImageUrl)
+           .NotEmpty().WithMessage("Cover Image URL is required fluent.");
         }
+
+
     }
 
 }
+
 

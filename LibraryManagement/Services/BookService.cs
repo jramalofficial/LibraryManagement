@@ -51,7 +51,7 @@ namespace LibraryManagement.Services
                     await addBook.CoverImageUrl.CopyToAsync(stream, cancellationToken);
                 }
 
-                // Relative path for saving in DB
+                
                 imagePath = "/uploads/" + uniqueFileName;
             }
 
