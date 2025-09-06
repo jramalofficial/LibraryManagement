@@ -128,12 +128,28 @@
     }
 </div>
 
-@Html.Partial("AddViewModal", new AddViewModel()) 
+<div aria-live="polite" aria-atomic="true" class="position-relative">
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        @if (TempData["ToastMessage"] != null)
+        {
+            <div class="toast align-items-center text-bg-primary border-0 show" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        @TempData["ToastMessage"]
+                    </div>
+                    <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
 
 
+@await Html.PartialAsync("AddViewModal", new AddViewModel()) 
+@await Html.PartialAsync("_ValidationScriptsPartial");
 
 @section Scripts{
-     @Html.RenderPartialAsync("_ValidationScriptsPartial");
+    
     <script>
          $(document).ready(function() {
            
@@ -179,7 +195,6 @@
                      $('#modalContainer').html(partialView);
                      $('#editBookModal').modal('show');
                      
-                    
                      $('#editBookModal').on('shown.bs.modal', function () {
                          var form = $('#editBookForm');
                          if (form.length > 0) {

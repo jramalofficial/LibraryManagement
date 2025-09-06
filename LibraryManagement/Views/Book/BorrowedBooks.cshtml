@@ -1,5 +1,20 @@
 ﻿@model List<(LibraryManagement.Models.Entities.BorrowRecord,String)>
 
+
+<div aria-live="polite" aria-atomic="true" class="position-relative">
+    <div class="toast-container position-fixed top-0 end-0 p-3 z-3" id="toastContainer">
+        <div class="toast text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <!-- Toast message will be inserted via JavaScript -->
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <table class="table">
     <thead>
         <tr>
@@ -12,54 +27,58 @@
         </tr>
     </thead>
     <tbody>
-    @foreach (var item in Model)
-    {
+        @foreach (var item in Model)
+        {
             var record = item.Item1;
             var userName = item.Item2;
 
             <tr>
-           <td>@userName</td>
-            <td>@record.Book.Title</td>
-            <td>@record.BorrowDate.ToShortDateString()</td>
-            <td>@record.ReturnDate.ToShortDateString()</td>
-            <td>@(record.IsReturned ? "Returned" : "Not Returned")</td>
-            <td>
-                <button class="btn btn-success return-btn"
-                        data-id="@record.Id"
-                        @(record.IsReturned ? "disabled" : "")>
-                    @(record.IsReturned ? "Returned" : "Return Book")
-                </button>
-            </td>
-        </tr>
-    }
+                <td>@userName</td>
+                <td>@record.Book.Title</td>
+                <td>@record.BorrowDate.ToShortDateString()</td>
+                <td>@record.ReturnDate.ToShortDateString()</td>
+                <td>@(record.IsReturned ? "Returned" : "Not Returned")</td>
+                <td>
+                    <button type="button"
+                            class="btn btn-success return-btn"
+                            data-id="@record.Id"
+                            @(record.IsReturned ? "disabled" : "")>
+                        @(record.IsReturned ? "Returned" : "Return Book")
+                    </button>
+                </td>
+            </tr>
+        }
     </tbody>
 </table>
 
+
 @section Scripts {
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('.return-btn').forEach(button => {
-                button.addEventListener('click', async function () {
-                    const id = this.dataset.id;
-
-                           if (confirm("Are you sure you want to return this book?")) {
-            const response = await fetch('/Books/ReturnBook/' + id, {
-                method: 'POST'
-            });
-
-            if (response.ok) {
-                alert("Book returned successfully!");
-                this.textContent = "Returned";
-                this.disabled = true;
-                this.closest('tr').querySelector('td:nth-child(4)').textContent = "Returned"; 
-            } else {
-                const error = await response.json();
-                alert(error.message || "Failed to return book.");
+        $(document).ready(function () {
+            $('.return-btn').click(function () {
+                const button = $(this);
+                const id = button.data('id');
+            $.ajax({
+           url: '@Url.Action("ReturnBook", "Book")',
+            type: 'POST',
+            data: { id: id },
+            success: function (response) {
+                if (response.success) {
+                    button.prop('disabled', true).text("Returned");
+                    $('#toastContainer .toast-body').text(response.message);
+                    new bootstrap.Toast($('#toastContainer .toast')[0]).show();
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function (xhr) {
+                console.log("Error:", xhr.responseText); 
+                alert("Something went wrong. Please check the console.");
             }
-        }
-                });
+        });
             });
         });
     </script>
 }
+
 

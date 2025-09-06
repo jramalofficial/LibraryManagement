@@ -30,9 +30,8 @@ namespace LibraryManagement.Controllers
             _bookService = bookService;
             _logger = logger;
             _userManager = userManager;
-         
-        }
 
+        }
 
         [HttpGet]
         public async Task<IActionResult> Index(CancellationToken cancellationToken, int page = 1)
@@ -44,7 +43,7 @@ namespace LibraryManagement.Controllers
                 Books = books,
                 CurrentPage = page,
                 TotalPages = (int)Math.Ceiling((double)totalCount / PageSize),
-             
+
 
 
             };
@@ -52,6 +51,8 @@ namespace LibraryManagement.Controllers
 
             return View(viewModel);
         }
+
+
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id, CancellationToken cancellationToken)
         {
@@ -71,7 +72,7 @@ namespace LibraryManagement.Controllers
                 Description = book.Description,
                 AvailableCopies = book.AvailableCopies
             };
-            return PartialView("EditViewModal", editModel); 
+            return PartialView("EditViewModal", editModel);
         }
 
 
@@ -132,7 +133,7 @@ namespace LibraryManagement.Controllers
 
             return RedirectToAction("Index");
         }
-       
+
 
         [HttpPost]
         public async Task<IActionResult> Borrow(Guid bookId, int page, CancellationToken cancellationToken)
@@ -225,17 +226,19 @@ namespace LibraryManagement.Controllers
         }
 
 
-        [HttpPost("Books/Return/{id}")]
+        [HttpPost]
         public async Task<IActionResult> ReturnBook(Guid id, CancellationToken cancellationToken)
         {
             bool result = await _bookService.ReturnBookAsync(id, cancellationToken);
             if (result)
             {
-                return Ok(new { message = "Book returned successfully!" });
+                return Json(new { success = true, message = "Book returned successfully!" });
+
             }
             else
             {
-                return BadRequest(new { message = "Failed to return the book." });
+                return Json(new { success = false, message = "Failed to return the book." });
+
             }
 
         }
