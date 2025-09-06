@@ -248,6 +248,15 @@ namespace LibraryManagement.Controllers
         public async Task<List<BorrowRecord>> ListUserBooks(CancellationToken cancellationToken)
         {
            
+
+
+
+
+
+
+
+
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var records = await _bookService.ListUserRecord(userId, cancellationToken);
             return (records);
         }
@@ -258,6 +267,10 @@ namespace LibraryManagement.Controllers
         }
 
         [HttpGet]
+
+
+
+
         public async Task<IActionResult> ShowDate(CancellationToken cancellationToken)
         {
             var policy = await _bookService.ShowDateAsync(cancellationToken);
@@ -268,6 +281,8 @@ namespace LibraryManagement.Controllers
             var policyrecord = new ReturnPolicyViewModal
             {
                 Id = policy.Id,
+
+
                 ReturnDurationDays = policy.ReturnDurationDays
             };
 
@@ -282,7 +297,7 @@ namespace LibraryManagement.Controllers
             var policy = await _bookService.EditDateAsync(returnDate, cancellationToken);
             if (policy == null)
             {
-                return NotFound("Return policy not found.");
+                return NotFound("Return policy not");
             }
             return RedirectToAction("Index");
         }
