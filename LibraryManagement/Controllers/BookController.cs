@@ -247,7 +247,7 @@ namespace LibraryManagement.Controllers
         [HttpPost]
         public async Task<List<BorrowRecord>> ListUserBooks(CancellationToken cancellationToken)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+           
             var records = await _bookService.ListUserRecord(userId, cancellationToken);
             return (records);
         }
