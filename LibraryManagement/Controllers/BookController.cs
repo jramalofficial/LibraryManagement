@@ -252,6 +252,11 @@ namespace LibraryManagement.Controllers
             return (records);
         }
 
+        public async Task<IActionResult> AddDate()
+        {
+            return PartialView("ReturnPolicyModal");
+        }
+
         [HttpGet]
         public async Task<IActionResult> ShowDate(CancellationToken cancellationToken)
         {
