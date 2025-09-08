@@ -276,7 +276,7 @@ namespace LibraryManagement.Controllers
             var policy = await _bookService.ShowDateAsync(cancellationToken);
             if (policy == null)
             {
-                return NotFound("Return policy not.");
+                return NotFound("Return policy not found.");
             }
             var policyrecord = new ReturnPolicyViewModal
             {
