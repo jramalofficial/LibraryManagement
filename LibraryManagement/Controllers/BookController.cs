@@ -297,7 +297,7 @@ namespace LibraryManagement.Controllers
             var policy = await _bookService.EditDateAsync(returnDate, cancellationToken);
             if (policy == null)
             {
-                return NotFound("Return policy not");
+                return NotFound("Return policy not found");
             }
             return RedirectToAction("Index");
         }
