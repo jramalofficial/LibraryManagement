@@ -157,7 +157,7 @@ namespace LibraryManagement.Controllers
             }
             else
             {
-                TempData["Error"] = "Book is not available.";
+                TempData["Error"] = "Book is not available";
             }
 
             return RedirectToAction("Index", new { page = page });
