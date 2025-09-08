@@ -153,7 +153,7 @@ namespace LibraryManagement.Controllers
 
             if (result)
             {
-                TempData["Success"] = "Book borrowed successfully!";
+                TempData["Success"] = "Book borrowed successfully";
             }
             else
             {
