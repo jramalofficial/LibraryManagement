@@ -267,10 +267,6 @@ namespace LibraryManagement.Controllers
         }
 
         [HttpGet]
-
-
-
-
         public async Task<IActionResult> ShowDate(CancellationToken cancellationToken)
         {
             var policy = await _bookService.ShowDateAsync(cancellationToken);
